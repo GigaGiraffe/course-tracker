@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои Курсы v1.1</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#0F0F0F',
+                        card: '#18181B',
+                        hover: '#27272A',
+                        accent: '#27D566',
+                        text: '#FFFFFF',
+                        subtext: '#A1A1AA',
+                        border: '#27272A'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0F0F0F; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0F0F0F; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        
+        .circle-progress {
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- БАЗА ЦИТАТ ---
+        const QUOTES = [
+            { text: "Через год вы будете жалеть, что не начали сегодня.", author: "Карен Лэмб" },
+            { text: "Не останавливайтесь, когда устали. Останавливайтесь, когда закончили.", author: "Мэрилин Монро" },
+            { text: "Инвестиции в знания платят лучшие дивиденды.", author: "Бенджамин Франклин" },
+            { text: "Ваше время ограничено, не тратьте его, живя чужой жизнью.", author: "Стив Джобс" },
+            { text: "Успех — это сумма небольших усилий, повторяющихся изо дня в день.", author: "Роберт Кольер" },
+            { text: "Лучший способ предсказать будущее — создать его.", author: "Питер Друкер" },
+            { text: "Обучение — это не подготовка к жизни, это и есть сама жизнь.", author: "Джон Дьюи" },
+            { text: "Чем больше я учусь, тем больше понимаю, как мало я знаю.", author: "Альберт Эйнштейн" },
+            { text: "Дисциплина — это решение делать то, чего очень не хочется делать, чтобы достичь того, чего очень хочется достичь.", author: "Джон Максвелл" },
+            { text: "Мастерство приходит только с практикой и не может быть куплено лишь чтением инструкций.", author: "Наполеон Хилл" },
+            { text: "Начинать всегда страшно, но еще страшнее никогда не начать.", author: "Неизвестный" },
+            { text: "Вчера — это история, завтра — это тайна, а сегодня — это подарок.", author: "Билл Кин" },
+            { text: "Секрет успеха — в постоянстве цели.", author: "Бенджамин Дизраэли" },
+            { text: "Не бойтесь расти медленно, бойтесь оставаться неизменными.", author: "Китайская пословица" },
+            { text: "Любой эксперт когда-то был новичком.", author: "Хелен Хейс" }
+        ];
+
+        // --- ИКОНКИ ---
+        const IconFolder = ({size=24, filled}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>;
+        const IconCheck = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#27D566" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+        const IconCircle = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#52525B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>;
+        const IconChevronRight = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+        const IconChevronDown = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>;
+        const IconTrash = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+        const IconPlus = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+        const IconBack = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
+        const IconVideo = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>;
+        const IconStar = ({filled}) => <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? "#F59E0B" : "none"} stroke={filled ? "#F59E0B" : "#52525B"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+        const IconRefresh = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>;
+        const IconDownload = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+        const IconUpload = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+        const IconHelp = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+        const IconEye = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const IconEyeOff = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
+        const IconEdit = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>;
+        const IconQuote = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-accent/20"><path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.91203 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z" /></svg>;
+
+
+        // --- КОМПОНЕНТЫ ---
+        
+        const CircularProgress = ({ percentage, size = 80, strokeWidth = 8 }) => {
+            const radius = (size - strokeWidth) / 2;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - (percentage / 100) * circumference;
+
+            return (
+                <div className="relative flex items-center justify-center select-none" style={{ width: size, height: size }}>
+                    <svg width={size} height={size} className="transform -rotate-90 drop-shadow-lg">
+                        <circle cx={size / 2} cy={size / 2} r={radius} stroke="#27272A" strokeWidth={strokeWidth} fill="transparent" />
+                        <circle className="circle-progress" cx={size / 2} cy={size / 2} r={radius} stroke="#27D566" strokeWidth={strokeWidth} fill="transparent" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+                    </svg>
+                    <span className="absolute text-lg font-bold text-white">{percentage}%</span>
+                </div>
+            );
+        };
+
+        const StarRating = ({ rating, onRate }) => {
+            const [hover, setHover] = useState(0);
+            return (
+                <div className="flex gap-1" onMouseLeave={() => setHover(0)}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <div 
+                            key={star}
+                            className="cursor-pointer transition-transform hover:scale-110"
+                            onMouseEnter={() => setHover(star)}
+                            onClick={(e) => { e.stopPropagation(); onRate(star); }}
+                        >
+                            <IconStar filled={star <= (hover || rating)} />
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+                const QuoteBlock = () => {
+            const [quote, setQuote] = useState(null);
+            useEffect(() => { setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]); }, []);
+            if (!quote) return null;
+
+            return (
+                <div className="w-full bg-card border border-border rounded-2xl p-6 mb-8 flex gap-4 items-start relative overflow-hidden animate-fade-in group hover:border-accent/30 transition-colors">
+                    <div className="text-accent shrink-0 mt-1"><IconQuote /></div>
+                    <div className="relative z-10 flex-grow">
+                        <p className="text-lg text-white font-medium italic mb-2 leading-relaxed">"{quote.text}"</p>
+                        <p className="text-sm text-subtext font-mono">— {quote.author}</p>
+                    </div>
+                    <div className="text-accent shrink-0 mt-1 transform rotate-180"><IconQuote /></div>
+                </div>
+            );
+        };// --- ЛОГИКА ---
+
+        async function scanEntry(entry) {
+            if (entry.kind === 'file') {
+                if (entry.name.startsWith('.') || entry.name.endsWith('.db') || entry.name.endsWith('.ini')) return null;
+                return { name: entry.name, kind: 'file', id: Math.random().toString(36).substr(2, 9) };
+            } else if (entry.kind === 'directory') {
+                let children = [];
+                for await (const child of entry.values()) {
+                    const scannedChild = await scanEntry(child);
+                    if (scannedChild) children.push(scannedChild);
+                }
+                children.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'directory' ? -1 : 1));
+                if (children.length === 0) return null;
+                return { name: entry.name, kind: 'directory', children, id: Math.random().toString(36).substr(2, 9) };
+            }
+        }
+
+        function mergeStructure(newStruct, oldStruct) {
+            if (!oldStruct) return newStruct;
+            if (newStruct.kind === 'file' && oldStruct.kind === 'file' && newStruct.name === oldStruct.name) {
+                return { ...newStruct, id: oldStruct.id };
+            }
+            if (newStruct.kind === 'directory' && oldStruct.kind === 'directory') {
+                const newChildren = newStruct.children.map(newChild => {
+                    const oldChild = oldStruct.children.find(oc => oc.name === newChild.name);
+                    return mergeStructure(newChild, oldChild);
+                });
+                return { ...newStruct, children: newChildren, id: oldStruct.id };
+            }
+            return newStruct;
+        }
+
+        function countFiles(node, excludedMap = {}) {
+            if (!node) return 0;
+            if (node.kind === 'file') {
+                return excludedMap[node.id] ? 0 : 1;
+            }
+            return node.children.reduce((acc, child) => acc + countFiles(child, excludedMap), 0);
+        }
+        function countCompletedFiles(node, completedMap, excludedMap = {}) {
+            if (!node) return 0;
+            if (node.kind === 'file') {
+                if (excludedMap[node.id]) return 0;
+                return completedMap[node.id] ? 1 : 0;
+            }
+            return node.children.reduce((acc, child) => acc + countCompletedFiles(child, completedMap, excludedMap), 0);
+        }
+
+        const FileTree = ({ node, completedMap, ratingsMap, excludedMap = {}, onToggle, onRate, onExclude }) => {
+            const [isOpen, setIsOpen] = useState(true);
+
+            const folderStats = useMemo(() => {
+                if (node.kind !== 'directory') return null;
+                const total = countFiles(node, excludedMap);
+                const completed = countCompletedFiles(node, completedMap, excludedMap);
+                const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+                return { total, completed, percent };
+            }, [node, completedMap, excludedMap]);
+
+            if (node.kind === 'file') {
+                const isCompleted = completedMap[node.id];
+                const rating = ratingsMap[node.id] || 0;
+                const isExcluded = excludedMap[node.id];
+
+                return (
+                    <div className={`group flex items-center justify-between py-3.5 px-4 rounded-xl mb-1 border border-transparent transition-all
+                            ${isExcluded ? 'opacity-40 grayscale' : (isCompleted ? 'bg-accent/5 border-accent/10' : 'hover:bg-hover hover:border-border')}`}>
+                        <div onClick={() => !isExcluded && onToggle(node.id)} className={`flex items-center gap-5 flex-grow min-w-0 mr-4 ${isExcluded ? 'cursor-default' : 'cursor-pointer'}`}>
+                            <div className={`shrink-0 transition-transform duration-200 ${isCompleted && !isExcluded ? 'scale-110' : 'group-hover:scale-110'}`}>
+                                {isCompleted ? <IconCheck /> : <IconCircle />}
+                            </div>
+                            <div className={`shrink-0 ${isCompleted ? 'text-accent/40' : 'text-subtext'}`}><IconVideo /></div>
+                            <div className={`text-lg font-medium truncate select-none transition-colors ${isCompleted ? 'text-subtext line-through opacity-60' : 'text-text'}`}>
+                                {node.name}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className={`opacity-0 group-hover:opacity-100 transition-opacity ${rating > 0 && !isExcluded ? 'opacity-100' : ''} ${isExcluded ? 'invisible' : ''}`}>
+                                <StarRating rating={rating} onRate={(r) => onRate(node.id, r)} />
+                            </div>
+                             <div 
+                                onClick={(e) => { e.stopPropagation(); onExclude(node.id); }}
+                                className={`cursor-pointer p-2 rounded-lg hover:bg-white/10 text-subtext hover:text-white transition-all ${isExcluded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                title={isExcluded ? "Включить в прогресс" : "Исключить из прогресса"}
+                            >
+                                {isExcluded ? <IconEyeOff /> : <IconEye />}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const isFolderCompleted = folderStats.percent === 100;
+
+            return (
+                <div className="mb-4 mt-3">
+                    <div onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between py-2 px-2 rounded-lg cursor-pointer hover:bg-hover select-none group w-full">
+                        <div className="flex items-center gap-3">
+                            <span className="text-subtext group-hover:text-text transition-colors bg-card p-1.5 rounded-lg border border-border group-hover:border-subtext">
+                                {isOpen ? <IconChevronDown /> : <IconChevronRight />}
+                            </span>
+                            <span className={isFolderCompleted ? "text-subtext opacity-50" : "text-yellow-500/90"}><IconFolder size={28} /></span>
+                            <span className={`font-bold text-xl tracking-tight transition-colors ${isFolderCompleted ? 'text-subtext line-through opacity-60 decoration-2' : 'group-hover:text-white text-gray-200'}`}>
+                                {node.name}
+                            </span>
+                        </div>
+                        <div className={`text-sm font-mono font-bold px-3 py-1 rounded-full border ${isFolderCompleted ? 'bg-accent/10 text-accent border-accent/20' : 'bg-card text-subtext border-border'}`}>
+                            {folderStats.percent}%
+                        </div>
+                    </div>
+                    {isOpen && (
+                        <div className="border-l-2 border-border ml-[21px] pl-5 mt-2 space-y-1">
+                            {node.children.map(child => (
+                                <FileTree key={child.id} node={child} completedMap={completedMap} ratingsMap={ratingsMap} excludedMap={excludedMap} onToggle={onToggle} onRate={onRate} onExclude={onExclude} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        const HelpScreen = ({ onClose }) => (
+            <div className="fixed inset-0 bg-[#0F0F0F] z-50 overflow-y-auto p-6 md:p-12">
+                <div className="max-w-3xl mx-auto">
+                    <button onClick={onClose} className="mb-8 flex items-center gap-2 text-subtext hover:text-white transition-colors bg-card px-4 py-2 rounded-lg border border-border">
+                        <IconBack /> Назад
+                    </button>
+
+                    <h1 className="text-4xl font-bold mb-8">Справка по интерфейсу</h1>
+                    <div className="space-y-8">
+                        <section className="bg-card p-6 rounded-2xl border border-border">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconPlus /> Добавление курса</h2>
+                            <p className="text-subtext mb-4">Нажмите кнопку <b>«Добавить курс»</b> и выберите папку на вашем компьютере. Трекер просканирует все вложенные файлы и папки.</p>
+                            <div className="bg-bg p-4 rounded-lg border border-border text-sm text-yellow-500/80">
+                                💡 Совет: Лучше выбирать корневую папку курса, где лежат папки с модулями (например, "Модуль 1", "Модуль 2").
+                            </div>
+                        </section>
+
+                        <section className="bg-card p-6 rounded-2xl border border-border">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconEdit /> Переименование курса</h2>
+                            <p className="text-subtext">В списке курсов наведите курсор на название курса. Появится значок карандаша. Нажмите на него, чтобы изменить название (например, убрать лишние теги <i>[slwbl]</i>). Это не влияет на папку на диске.</p>
+                        </section>
+
+                        <section className="bg-card p-6 rounded-2xl border border-border">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconDownload /> Бэкап и Восстановление</h2>
+                            <p className="text-subtext mb-2">Все данные хранятся в вашем браузере. Чтобы не потерять прогресс при очистке кэша:</p>
+                            <ul className="list-disc list-inside text-subtext space-y-2 ml-2">
+                                <li><b>Бэкап:</b> Скачивает файл .json со всеми вашими курсами и отметками.</li>
+                                <li><b>Восстановить:</b> Загружает данные из .json файла (внимание: текущие данные будут заменены!).</li>
+                            </ul>
+                        </section>
+
+                        <section className="bg-card p-6 rounded-2xl border border-border">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconRefresh /> Обновление файлов (Рескан)</h2>
+                            <p className="text-subtext">Если вы скачали новые уроки в папку курса, зайдите внутрь курса и нажмите кнопку <b>«Обновить файлы»</b> (справа от названия). Выберите ту же папку заново. Новые файлы появятся в списке, а ваши старые отметки сохранятся.</p>
+                        </section>
+
+                        <section className="bg-card p-6 rounded-2xl border border-border">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconEye /> Исключение из прогресса</h2>
+                            <p className="text-subtext">Наведите курсор на любой файл. Справа появится иконка глаза. Нажмите её, чтобы <b>исключить файл</b> из расчета общего прогресса (например, файлы заданий или доп. материалов). Файл станет серым, а иконка сменится на перечеркнутый глаз.</p>
+                        </section>
+
+                        <section className="bg-card p-6 rounded-2xl border border-border">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconStar filled={true} /> Оценка уроков</h2>
+                            <p className="text-subtext">Наведите курсор на файл, чтобы увидеть звезды рейтинга. Вы можете поставить оценку от 1 до 5, чтобы отметить полезные или сложные уроки для будущего повторения.</p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        );const App = () => {
+            const [courses, setCourses] = useState(() => {
+                const saved = localStorage.getItem('vibe_courses');
+                return saved ? JSON.parse(saved) : [];
+            });
+            const [activeCourseId, setActiveCourseId] = useState(null);
+            const [showHelp, setShowHelp] = useState(false);
+            const [editingId, setEditingId] = useState(null);
+            const fileInputRef = useRef(null);
+            const editInputRef = useRef(null);
+
+            useEffect(() => { localStorage.setItem('vibe_courses', JSON.stringify(courses)); }, [courses]);
+            useEffect(() => { if (editingId && editInputRef.current) editInputRef.current.focus(); }, [editingId]);
+
+            const handleAddCourse = async () => {
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    const structure = await scanEntry(dirHandle);
+                    if (!structure) return alert("Папка пуста или содержит только системные файлы");
+                    if (courses.some(c => c.name === dirHandle.name)) return alert("Этот курс уже добавлен");
+                    setCourses([...courses, {
+                        id: Math.random().toString(36).substr(2, 9),
+                        name: dirHandle.name,
+                        displayName: dirHandle.name, 
+                        structure: structure,
+                        completed: {},
+                        ratings: {}, excluded: {},
+                        createdAt: new Date().toISOString()
+                    }]);
+                } catch (err) { if (err.name !== 'AbortError') console.error(err); }
+            };
+
+            const handleRescan = async (courseId) => {
+                try {
+                    const course = courses.find(c => c.id === courseId);
+                    alert(`Пожалуйста, выберите папку: ${course.name}`);
+                    const dirHandle = await window.showDirectoryPicker();
+                    if (dirHandle.name !== course.name) {
+                        if(!confirm("Имя выбранной папки отличается от имени курса. Продолжить?")) return;
+                    }
+                    const newStructure = await scanEntry(dirHandle);
+                    if (!newStructure) return alert("Не удалось прочитать структуру папки");
+                    const mergedStructure = mergeStructure(newStructure, course.structure);
+                    setCourses(courses.map(c => c.id === courseId ? { ...c, structure: mergedStructure } : c));
+                    alert("Структура успешно обновлена!");
+                } catch (err) { if (err.name !== 'AbortError') console.error(err); }
+            };
+            
+            const saveName = (id, newName) => {
+                if (newName.trim()) { setCourses(courses.map(c => c.id === id ? { ...c, displayName: newName } : c)); }
+                setEditingId(null);
+            };
+
+            const handleExport = () => {
+                const dataStr = JSON.stringify(courses, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.download = `vibe_backup_${new Date().toISOString().slice(0,10)}.json`;
+                link.href = url;
+                link.click();
+            };
+
+            const handleImportFile = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedCourses = JSON.parse(event.target.result);
+                        if (Array.isArray(importedCourses)) {
+                            if(confirm("Это заменит все текущие данные. Продолжить?")) {
+                                setCourses(importedCourses);
+                                alert("Данные восстановлены!");
+                            }
+                        } else { alert("Неверный формат файла"); }
+                    } catch (err) { alert("Ошибка чтения файла"); }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            };
+
+            const handleDelete = (e, id) => {
+                e.stopPropagation();
+                if (confirm('Удалить курс?')) {
+                    setCourses(courses.filter(c => c.id !== id));
+                    if (activeCourseId === id) setActiveCourseId(null);
+                }
+            };
+
+            const toggleFile = (courseId, fileId) => {
+                setCourses(courses.map(c => {
+                    if (c.id !== courseId) return c;
+                    const newCompleted = { ...c.completed };
+                    if (newCompleted[fileId]) delete newCompleted[fileId]; else newCompleted[fileId] = true;
+                    return { ...c, completed: newCompleted };
+                }));
+            };
+
+            const rateFile = (courseId, fileId, rating) => {
+                setCourses(courses.map(c => {
+                    if (c.id !== courseId) return c;
+                    const newRatings = { ...(c.ratings || {}) };
+                    if (newRatings[fileId] === rating) delete newRatings[fileId];
+                    else newRatings[fileId] = rating;
+                    return { ...c, ratings: newRatings };
+                }));
+            };
+            const toggleExclude = (courseId, fileId) => {
+                setCourses(courses.map(c => {
+                    if (c.id !== courseId) return c;
+                    const newExcluded = { ...(c.excluded || {}) };
+                    if (newExcluded[fileId]) delete newExcluded[fileId]; else newExcluded[fileId] = true;
+                    return { ...c, excluded: newExcluded };
+                }));
+            };
+
+
+            const getProgress = (course) => {
+                const total = countFiles(course.structure, course.excluded);
+                const done = countCompletedFiles(course.structure, course.completed, course.excluded);
+                return total === 0 ? 0 : Math.round((done / total) * 100);
+            };
+
+            if (showHelp) return <HelpScreen onClose={() => setShowHelp(false)} />;
+
+            if (activeCourseId) {
+                const course = courses.find(c => c.id === activeCourseId);
+                if (!course) return setActiveCourseId(null);
+                const progress = getProgress(course);
+
+                return (
+                    <div className="max-w-5xl mx-auto min-h-screen pb-20">
+                        <div className="sticky top-0 z-20 bg-[#0F0F0F]/95 backdrop-blur-md mb-8 shadow-2xl">
+                            <div className="max-w-5xl mx-auto px-6 py-5">
+                                <div className="flex items-center justify-between mb-6">
+                                    <button onClick={() => setActiveCourseId(null)} className="flex items-center gap-2 text-subtext hover:text-white transition-colors bg-card hover:bg-hover px-5 py-2.5 rounded-xl border border-border font-medium">
+                                        <IconBack /> Назад
+                                    </button>
+                                    <div className="text-right flex items-center gap-4">
+                                        <span className="text-sm font-mono text-subtext uppercase tracking-widest hidden sm:inline">Общий прогресс</span>
+                                        <div className="text-3xl font-bold text-accent">{progress}%</div>
+                                    </div>
+                                </div>
+                                <div className="h-5 w-full bg-card rounded-full overflow-hidden border border-white/5 relative">
+                                    <div className="absolute inset-0 bg-white/5"></div>
+                                    <div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all duration-500 ease-out relative" style={{width: `${progress}%`}}></div>
+                                </div>
+                                <div className="flex justify-between items-end mt-6">
+                                    <h1 className="text-4xl font-bold tracking-tight text-white leading-tight">{course.displayName || course.name}</h1>
+                                    <button onClick={() => handleRescan(course.id)} className="flex items-center gap-2 text-sm text-subtext hover:text-accent hover:bg-accent/10 px-3 py-2 rounded-lg transition-all" title="Обновить список файлов, сохранив прогресс">
+                                        <IconRefresh /> Обновить файлы
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="px-6">
+                            <div className="bg-card rounded-3xl p-8 border border-border/50 shadow-inner">
+                                {course.structure.children.map(child => (
+                                    <FileTree key={child.id} node={child} completedMap={course.completed} ratingsMap={course.ratings || {}} onToggle={(fileId) => toggleFile(course.id, fileId)} onRate={(fileId, rating) => rateFile(course.id, fileId, rating)} excludedMap={course.excluded || {}} onExclude={(fileId) => toggleExclude(course.id, fileId)} />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const sortedCourses = [...courses]
+                .map(c => ({ course: c, progress: getProgress(c) }))
+                .sort((a, b) => {
+                    if (a.progress === b.progress) {
+                        const aDate = a.course.createdAt || '';
+                        const bDate = b.course.createdAt || '';
+                        return aDate.localeCompare(bDate);
+                    }
+                    return a.progress - b.progress;
+                })
+                .map(item => item.course);
+
+            const completedCount = sortedCourses.filter(c => getProgress(c) === 100).length;
+            const inProgressCount = sortedCourses.filter(c => {
+                const p = getProgress(c);
+                return p > 0 && p < 100;
+            }).length;
+
+            return (
+                <div className="max-w-4xl mx-auto p-6 md:p-10 min-h-screen">
+                    <header className="flex flex-col gap-6 pt-4 mb-10">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="flex items-center gap-5">
+                                <div className="w-16 h-16 bg-gradient-to-br from-green-900/40 to-black rounded-2xl border border-accent/20 flex items-center justify-center text-accent shadow-2xl shadow-accent/10">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                </div>
+                                <div>
+                                    <h1 className="text-4xl font-bold text-white tracking-tight flex items-center gap-3">
+                                        Мои Курсы
+                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.1</span>
+                                    </h1>
+                                    <p className="text-subtext text-lg mt-1">Локальный трекер обучения</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <input type="file" ref={fileInputRef} onChange={handleImportFile} className="hidden" accept=".json" />
+                                <button onClick={() => setShowHelp(true)} className="flex items-center gap-2 text-sm font-medium text-subtext hover:text-white bg-card hover:bg-hover px-3 py-2 rounded-lg border border-border transition-colors" title="Справка">
+                                    <IconHelp />
+                                </button>
+                                <button onClick={handleExport} className="flex items-center gap-2 text-sm font-medium text-subtext hover:text-white bg-card hover:bg-hover px-3 py-2 rounded-lg border border-border transition-colors">
+                                    <IconDownload /> Бэкап
+                                </button>
+                                <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-2 text-sm font-medium text-subtext hover:text-white bg-card hover:bg-hover px-3 py-2 rounded-lg border border-border transition-colors">
+                                    <IconUpload /> Восстановить
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    {courses.length > 0 && (
+                        <div className="mb-6 flex flex-wrap items-center gap-3 text-sm">
+                            <div className="bg-card rounded-2xl border border-border px-4 py-2 flex items-center gap-3">
+                                <span className="text-2xl">🏆</span>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-xs uppercase tracking-widest text-subtext/70 font-mono">Пройдено</span>
+                                    <span className="text-lg font-semibold text-white">{completedCount}</span>
+                                </div>
+                            </div>
+                            <div className="bg-card rounded-2xl border border-border px-4 py-2 flex items-center gap-3">
+                                <span className="text-2xl">🔨</span>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-xs uppercase tracking-widest text-subtext/70 font-mono">В работе</span>
+                                    <span className="text-lg font-semibold text-white">{inProgressCount}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <QuoteBlock />
+
+                    <button onClick={handleAddCourse} className="w-full flex items-center justify-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all active:scale-95 shadow-xl shadow-white/5 mb-10">
+                        <IconPlus /> Добавить курс
+                    </button>
+
+                    <div className="space-y-6">
+                        {courses.length === 0 ? (
+                            <div onClick={handleAddCourse} className="border-3 border-dashed border-border rounded-3xl h-80 flex flex-col items-center justify-center text-subtext cursor-pointer hover:border-accent hover:text-accent transition-all bg-card/30 group">
+                                <div className="p-6 bg-card rounded-full mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                                    <IconFolder size={40} />
+                                </div>
+                                <p className="text-xl font-bold">Здесь пока пусто</p>
+                                <p className="text-base opacity-60 mt-2">Нажми, чтобы добавить папку с курсом</p>
+                            </div>
+                        ) : (
+                            sortedCourses.map(course => {
+                                const progress = getProgress(course);
+                                return (
+                                    <div 
+                                        key={course.id}
+                                        onClick={() => setActiveCourseId(course.id)}
+                                        className="group bg-card border border-border rounded-3xl p-7 cursor-pointer hover:border-gray-600 hover:bg-[#1C1C20] transition-all hover:shadow-2xl flex items-center justify-between gap-8 relative overflow-hidden"
+                                    >
+                                        <div className="flex items-center gap-8 min-w-0 flex-1">
+                                            <div className="shrink-0 w-24 h-24 bg-[#0F0F0F] rounded-2xl flex items-center justify-center text-subtext group-hover:text-white transition-colors border border-border group-hover:border-gray-600 shadow-lg">
+                                                <IconFolder size={42} />
+                                            </div>
+                                            <div className="min-w-0 py-2 flex-1">
+                                                {editingId === course.id ? (
+                                                    <input 
+                                                        ref={editInputRef}
+                                                        defaultValue={course.displayName || course.name}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') saveName(course.id, e.target.value);
+                                                            if (e.key === 'Escape') setEditingId(null);
+                                                        }}
+                                                        onBlur={(e) => saveName(course.id, e.target.value)}
+                                                        className="bg-[#0F0F0F] text-2xl font-bold text-white w-full border border-accent rounded-lg px-2 py-1 outline-none"
+                                                    />
+                                                ) : (
+                                                    <div className="group/title flex items-center gap-3">
+                                                        <h3 className="text-2xl font-bold text-gray-100 group-hover:text-white truncate transition-colors mb-2 leading-tight" title={course.name}>
+                                                            {course.displayName || course.name}
+                                                        </h3>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setEditingId(course.id); }}
+                                                            className="opacity-0 group-hover/title:opacity-100 text-subtext hover:text-accent transition-opacity p-1 mb-2"
+                                                            title="Изменить название"
+                                                        >
+                                                            <IconEdit />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                
+                                                <div className="flex items-center gap-3">
+                                                    <span className="bg-[#27272A] px-3 py-1 rounded-lg text-sm font-mono text-subtext border border-white/5">
+                                                        {countFiles(course.structure)} файлов
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-8 shrink-0 z-10 pl-4 border-l border-white/5 h-20">
+                                            <div className="hover:scale-105 transition-transform">
+                                                <CircularProgress percentage={progress} size={80} strokeWidth={8} />
+                                            </div>
+                                            <button onClick={(e) => handleDelete(e, course.id)} className="text-subtext hover:text-red-500 p-3 rounded-xl hover:bg-white/10 transition-colors opacity-0 group-hover:opacity-100" title="Удалить курс">
+                                                <IconTrash />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
