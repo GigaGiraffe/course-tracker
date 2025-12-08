@@ -50,6 +50,11 @@
             transform-origin: 50% 50%;
         }
     </style>
+
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+CiAgPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMDAiIGZpbGw9IiMwRjBGMEYiLz4KICA8cmVjdCB4PSIxMDAiIHk9IjEwMCIgd2lkdGg9IjMxMiIgaGVpZ2h0PSIzMTIiIHJ4PSI0MCIgc3Ryb2tlPSIjMjdENTY2IiBzdHJva2Utd2lkdGg9IjQwIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTE4MCAyNTYgTDI0MCAzMTYgTDMzMiAxOTYiIHN0cm9rZT0iIzI3RDU2NiIgc3Ryb2tlLXdpZHRoPSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPg==" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+CiAgPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMDAiIGZpbGw9IiMwRjBGMEYiLz4KICA8cmVjdCB4PSIxMDAiIHk9IjEwMCIgd2lkdGg9IjMxMiIgaGVpZ2h0PSIzMTIiIHJ4PSI0MCIgc3Ryb2tlPSIjMjdENTY2IiBzdHJva2Utd2lkdGg9IjQwIiBmaWxsPSJub25lIi8+CiAgPHBhdGggZD0iTTE4MCAyNTYgTDI0MCAzMTYgTDMzMiAxOTYiIHN0cm9rZT0iIzI3RDU2NiIgc3Ryb2tlLXdpZHRoPSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPg==">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
     <div id="root"></div>
@@ -214,19 +219,19 @@
                 const isExcluded = excludedMap[node.id];
 
                 return (
-                    <div className={`group flex items-center justify-between py-3 px-3 sm:px-4 rounded-xl mb-1 border border-transparent transition-all
+                    <div className={`group flex flex-col sm:flex-row sm:items-center justify-between py-3 px-3 sm:px-4 rounded-xl mb-1 border border-transparent transition-all
                             ${isExcluded ? 'opacity-40 grayscale' : (isCompleted ? 'bg-accent/5 border-accent/10' : 'hover:bg-hover hover:border-border')}`}>
-                        <div onClick={() => !isExcluded && onToggle(node.id)} className={`flex items-center gap-3 sm:gap-5 flex-grow min-w-0 mr-2 sm:mr-4 ${isExcluded ? 'cursor-default' : 'cursor-pointer'}`}>
+                        <div onClick={() => !isExcluded && onToggle(node.id)} className={`flex items-center gap-3 sm:gap-5 flex-grow min-w-0 w-full sm:w-auto sm:mr-4 ${isExcluded ? 'cursor-default' : 'cursor-pointer'}`}>
                             <div className={`shrink-0 transition-transform duration-200 ${isCompleted && !isExcluded ? 'scale-110' : 'group-hover:scale-110'}`}>
                                 {isCompleted ? <IconCheck /> : <IconCircle />}
                             </div>
                             <div className={`shrink-0 ${isCompleted ? 'text-accent/40' : 'text-subtext'}`}><IconVideo /></div>
-                            <div className={`text-base sm:text-lg font-medium truncate select-none transition-colors ${isCompleted ? 'text-subtext line-through opacity-60' : 'text-text'}`}>
+                            <div className={`text-base sm:text-lg font-medium break-words whitespace-normal select-none transition-colors ${isCompleted ? 'text-subtext line-through opacity-60' : 'text-text'}`}>
                                 {node.name}
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className={`opacity-0 group-hover:opacity-100 transition-opacity ${rating > 0 && !isExcluded ? 'opacity-100' : ''} ${isExcluded ? 'invisible' : ''}`}>
+                            <div className={`flex items-center justify-end w-full sm:w-auto mt-2 sm:mt-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ${rating > 0 && !isExcluded ? 'sm:opacity-100' : ''} ${isExcluded ? 'invisible' : ''}`}>
                                 <StarRating rating={rating} onRate={(r) => onRate(node.id, r)} />
                             </div>
                              <div 
