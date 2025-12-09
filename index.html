@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои Курсы v1.1</title>
+    <title>Мои Курсы v1.2 Cloud</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -99,6 +99,7 @@
         const IconEye = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
         const IconEyeOff = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
         const IconEdit = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>;
+        const IconCloud = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>;
         const IconQuote = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-accent/20"><path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.91203 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z" /></svg>;
 
 
@@ -138,7 +139,7 @@
             );
         };
 
-                const QuoteBlock = () => {
+        const QuoteBlock = () => {
             const [quote, setQuote] = useState(null);
             useEffect(() => { setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]); }, []);
             if (!quote) return null;
@@ -153,7 +154,86 @@
                     <div className="text-accent shrink-0 mt-1 transform rotate-180"><IconQuote /></div>
                 </div>
             );
-        };// --- ЛОГИКА ---
+        };
+
+        const CloudSyncModal = ({ onClose, onSync, onLoad, config, setConfig }) => {
+            const [status, setStatus] = useState(null); // 'loading', 'success', 'error'
+            const [msg, setMsg] = useState('');
+
+            const handleSave = () => {
+                localStorage.setItem('vibe_jsonbin_config', JSON.stringify(config));
+                setMsg('Настройки сохранены локально');
+                setStatus('success');
+                setTimeout(() => setStatus(null), 2000);
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-card border border-border rounded-2xl p-8 max-w-lg w-full shadow-2xl animate-fade-in">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold flex items-center gap-2"><IconCloud /> Синхронизация JSONBin</h2>
+                            <button onClick={onClose} className="text-subtext hover:text-white"><IconBack /></button>
+                        </div>
+                        
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-sm text-subtext mb-1">X-Master-Key (API Key)</label>
+                                <input 
+                                    type="password" 
+                                    value={config.key} 
+                                    onChange={(e) => setConfig({...config, key: e.target.value})}
+                                    className="w-full bg-bg border border-border rounded-lg px-4 py-2 text-white focus:border-accent outline-none"
+                                    placeholder="Начинается с $2a$..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-subtext mb-1">Bin ID</label>
+                                <input 
+                                    type="text" 
+                                    value={config.binId} 
+                                    onChange={(e) => setConfig({...config, binId: e.target.value})}
+                                    className="w-full bg-bg border border-border rounded-lg px-4 py-2 text-white focus:border-accent outline-none"
+                                    placeholder="Например: 65123abc..."
+                                />
+                            </div>
+                            <button onClick={handleSave} className="text-xs text-accent hover:underline">Сохранить ключи</button>
+                        </div>
+
+                        {status && (
+                            <div className={`mb-4 p-3 rounded-lg text-sm text-center ${status === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-accent/10 text-accent'}`}>
+                                {msg}
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <button 
+                                onClick={() => { setStatus('loading'); setMsg('Выгрузка...'); onSync(setStatus, setMsg); }}
+                                disabled={!config.key || !config.binId}
+                                className="flex flex-col items-center justify-center gap-2 p-4 bg-bg border border-border rounded-xl hover:border-accent hover:bg-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <IconUpload />
+                                <span className="font-bold">Выгрузить в облако</span>
+                                <span className="text-xs text-subtext">Локальные -> Облако</span>
+                            </button>
+                            <button 
+                                onClick={() => { setStatus('loading'); setMsg('Загрузка...'); onLoad(setStatus, setMsg); }}
+                                disabled={!config.key || !config.binId}
+                                className="flex flex-col items-center justify-center gap-2 p-4 bg-bg border border-border rounded-xl hover:border-accent hover:bg-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <IconDownload />
+                                <span className="font-bold">Скачать из облака</span>
+                                <span className="text-xs text-subtext">Облако -> Локальные</span>
+                            </button>
+                        </div>
+                        <div className="mt-6 text-center">
+                            <a href="https://jsonbin.io/login" target="_blank" className="text-sm text-subtext hover:text-white underline decoration-dashed">Получить ключи на JSONBin.io</a>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- ЛОГИКА ---
 
         async function scanEntry(entry) {
             if (entry.kind === 'file') {
@@ -292,6 +372,18 @@
                         </section>
 
                         <section className="bg-card p-6 rounded-2xl border border-border">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconCloud /> Облачная синхронизация</h2>
+                            <p className="text-subtext mb-2">Вы можете синхронизировать прогресс между устройствами через сервис JSONBin.io:</p>
+                            <ol className="list-decimal list-inside text-subtext space-y-2 ml-2 mb-2">
+                                <li>Зарегистрируйтесь на <a href="https://jsonbin.io" target="_blank" className="text-accent underline">jsonbin.io</a></li>
+                                <li>Создайте пустой Bin (Public: Private). Скопируйте <b>Bin ID</b>.</li>
+                                <li>В настройках профиля (API Keys) создайте новый ключ. Скопируйте <b>Master Key</b>.</li>
+                                <li>Нажмите иконку облака в трекере, введите данные и нажмите "Выгрузить в облако" на основном устройстве.</li>
+                                <li>На втором устройстве введите те же ключи и нажмите "Скачать из облака".</li>
+                            </ol>
+                        </section>
+
+                        <section className="bg-card p-6 rounded-2xl border border-border">
                             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconEdit /> Переименование курса</h2>
                             <p className="text-subtext">В списке курсов наведите курсор на название курса. Появится значок карандаша. Нажмите на него, чтобы изменить название (например, убрать лишние теги <i>[slwbl]</i>). Это не влияет на папку на диске.</p>
                         </section>
@@ -322,7 +414,9 @@
                     </div>
                 </div>
             </div>
-        );const App = () => {
+        );
+
+        const App = () => {
             const [courses, setCourses] = useState(() => {
                 const saved = localStorage.getItem('vibe_courses');
                 return saved ? JSON.parse(saved) : [];
@@ -332,6 +426,13 @@
             const [editingId, setEditingId] = useState(null);
             const fileInputRef = useRef(null);
             const editInputRef = useRef(null);
+
+            // Cloud Sync States
+            const [showCloud, setShowCloud] = useState(false);
+            const [cloudConfig, setCloudConfig] = useState(() => {
+                const saved = localStorage.getItem('vibe_jsonbin_config');
+                return saved ? JSON.parse(saved) : { key: '', binId: '' };
+            });
 
             useEffect(() => { localStorage.setItem('vibe_courses', JSON.stringify(courses)); }, [courses]);
             useEffect(() => { if (editingId && editInputRef.current) editInputRef.current.focus(); }, [editingId]);
@@ -446,6 +547,63 @@
                 return total === 0 ? 0 : Math.round((done / total) * 100);
             };
 
+            // --- Cloud Sync Logic ---
+            const handleCloudUpload = async (setStatus, setMsg) => {
+                try {
+                    const response = await fetch(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': cloudConfig.key
+                        },
+                        body: JSON.stringify(courses)
+                    });
+                    if (response.ok) {
+                        setStatus('success');
+                        setMsg('Успешно выгружено в облако!');
+                    } else {
+                        throw new Error('Ошибка API');
+                    }
+                } catch (e) {
+                    setStatus('error');
+                    setMsg('Ошибка соединения или неверные ключи');
+                    console.error(e);
+                }
+            };
+
+            const handleCloudDownload = async (setStatus, setMsg) => {
+                try {
+                    const response = await fetch(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Master-Key': cloudConfig.key,
+                             'X-Bin-Meta': 'false' 
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        // jsonbin v3 может вернуть объект { record: [...] } или просто массив, если X-Bin-Meta: false не сработает
+                        const coursesData = data.record || data; 
+                        
+                        if (Array.isArray(coursesData)) {
+                            setCourses(coursesData);
+                            setStatus('success');
+                            setMsg('Данные успешно загружены!');
+                            setTimeout(() => { setShowCloud(false); setStatus(null); }, 1500);
+                        } else {
+                            throw new Error('Неверный формат данных в облаке');
+                        }
+                    } else {
+                        throw new Error('Ошибка API');
+                    }
+                } catch (e) {
+                    setStatus('error');
+                    setMsg('Ошибка скачивания или неверные ключи');
+                    console.error(e);
+                }
+            };
+
+
             if (showHelp) return <HelpScreen onClose={() => setShowHelp(false)} />;
 
             if (activeCourseId) {
@@ -509,6 +667,15 @@
 
             return (
                 <div className="max-w-4xl mx-auto p-6 md:p-10 min-h-screen">
+                    {showCloud && (
+                        <CloudSyncModal 
+                            onClose={() => setShowCloud(false)} 
+                            onSync={handleCloudUpload}
+                            onLoad={handleCloudDownload}
+                            config={cloudConfig}
+                            setConfig={setCloudConfig}
+                        />
+                    )}
                     <header className="flex flex-col gap-6 pt-4 mb-10">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div className="flex items-center gap-5">
@@ -518,7 +685,7 @@
                                 <div>
                                     <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
                                         Мои Курсы
-                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.1</span>
+                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.2</span>
                                     </h1>
                                     <p className="text-subtext text-lg mt-1">Локальный трекер обучения</p>
                                 </div>
@@ -528,6 +695,9 @@
                                 <input type="file" ref={fileInputRef} onChange={handleImportFile} className="hidden" accept=".json" />
                                 <button onClick={() => setShowHelp(true)} className="flex items-center gap-2 text-sm font-medium text-subtext hover:text-white bg-card hover:bg-hover px-3 py-2 rounded-lg border border-border transition-colors" title="Справка">
                                     <IconHelp />
+                                </button>
+                                <button onClick={() => setShowCloud(true)} className="flex items-center gap-2 text-sm font-medium text-subtext hover:text-white bg-card hover:bg-hover px-3 py-2 rounded-lg border border-border transition-colors">
+                                    <IconCloud />
                                 </button>
                                 <button onClick={handleExport} className="flex items-center gap-2 text-sm font-medium text-subtext hover:text-white bg-card hover:bg-hover px-3 py-2 rounded-lg border border-border transition-colors">
                                     <IconDownload /> Бэкап
