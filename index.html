@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои Курсы v1.17 Stable</title>
+    <title>Мои Курсы v1.18 Stable Sync</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -477,9 +477,6 @@
             const [notification, setNotification] = useState(null); // { msg, type }
             const [unsavedChanges, setUnsavedChanges] = useState(false); // Track changes in active course
 
-            // Refs to store latest state for async operations
-            const coursesRef = useRef(courses);
-
             // Cloud Sync States
             const [showCloud, setShowCloud] = useState(false);
             const [cloudConfig, setCloudConfig] = useState(() => {
@@ -490,12 +487,7 @@
             // CHECK IF CLOUD IS CONFIGURED
             const isCloudConfigured = cloudConfig.key && cloudConfig.binId;
 
-            // Keep ref in sync with state
-            useEffect(() => { 
-                coursesRef.current = courses;
-                localStorage.setItem('vibe_courses', JSON.stringify(courses)); 
-            }, [courses]);
-
+            useEffect(() => { localStorage.setItem('vibe_courses', JSON.stringify(courses)); }, [courses]);
             useEffect(() => { if (editingId && editInputRef.current) editInputRef.current.focus(); }, [editingId]);
 
             // AUTO-SYNC ON LOAD
@@ -673,6 +665,7 @@
             };
 
             // --- Cloud Sync Logic ---
+            // FIXED: Removed useRef, using courses state directly
             const handleCloudUpload = async (setStatus, setMsg) => {
                 if(!cloudConfig.key || !cloudConfig.binId) {
                     if(setStatus) setStatus('error'); 
@@ -682,16 +675,15 @@
                 }
 
                 try {
-                    // Use ref to get the absolute latest state, ignoring closure staleness
-                    const currentCourses = coursesRef.current || [];
-
+                    // Directly use state 'courses' - safe because function is recreated on render
                     const response = await fetch(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Master-Key': cloudConfig.key
                         },
-                        body: JSON.stringify(currentCourses) 
+                        // Ensure we send [] if courses is null/undefined
+                        body: JSON.stringify(courses || []) 
                     });
                     if (response.ok) {
                         if(setStatus) { setStatus('success'); setMsg('Успешно выгружено в облако!'); }
@@ -701,9 +693,9 @@
                         throw new Error('Ошибка API');
                     }
                 } catch (e) {
+                    console.error("Cloud Upload Error:", e);
                     if(setStatus) { setStatus('error'); setMsg('Ошибка соединения'); }
                     else showToast('Ошибка соединения', 'error');
-                    console.error(e);
                 }
             };
 
@@ -844,7 +836,7 @@
                                 <div>
                                     <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
                                         Мои Курсы
-                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.17</span>
+                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.18</span>
                                     </h1>
                                     <p className="text-subtext text-lg mt-1">Локальный трекер обучения</p>
                                 </div>
@@ -933,7 +925,7 @@
                                                     ? 'bg-gradient-to-br from-green-900/20 to-black border border-accent text-accent shadow-[0_0_15px_rgba(39,213,102,0.15)]' 
                                                     : 'bg-[#0F0F0F] border border-border text-subtext group-hover:text-white group-hover:border-gray-600'
                                                 }`}>
-                                                <IconMortarboard size={56} />
+                                                <IconMortarboard size={64} />
                                             </div>
 
                                             <div className="min-w-0 py-2 flex-1">
