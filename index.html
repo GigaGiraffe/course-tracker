@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои Курсы v1.8 UI Fixes</title>
+    <title>Мои Курсы v1.9 Smooth UI</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -25,16 +25,23 @@
                     },
                     animation: {
                         'fade-in': 'fadeIn 0.5s ease-out',
-                        'slide-up': 'slideUp 0.3s ease-out',
+                        // Специальные анимации для центрированных элементов, чтобы они не "прыгали"
+                        'fade-in-centered': 'fadeInCentered 0.5s ease-out', 
+                        'slide-up-centered': 'slideUpCentered 0.3s ease-out',
                     },
                     keyframes: {
                         fadeIn: {
                             '0%': { opacity: '0', transform: 'translateY(-10px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        // Анимация, которая сохраняет центровку по X (-50%) во время движения
+                        fadeInCentered: {
+                            '0%': { opacity: '0', transform: 'translate(-50%, -20px)' },
+                            '100%': { opacity: '1', transform: 'translate(-50%, 0)' },
+                        },
+                        slideUpCentered: {
+                            '0%': { opacity: '0', transform: 'translate(-50%, 20px)' },
+                            '100%': { opacity: '1', transform: 'translate(-50%, 0)' },
                         }
                     }
                 }
@@ -168,7 +175,7 @@
             }, [onClose]);
 
             return (
-                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] px-6 py-4 rounded-xl shadow-2xl animate-fade-in flex items-center gap-3 border ${type === 'error' ? 'bg-red-900/90 border-red-500/50 text-white' : 'bg-[#1C1C20]/90 border-accent/30 text-white'}`}>
+                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] px-6 py-4 rounded-xl shadow-2xl animate-fade-in-centered flex items-center gap-3 border whitespace-nowrap ${type === 'error' ? 'bg-red-900/90 border-red-500/50 text-white' : 'bg-[#1C1C20]/90 border-accent/30 text-white'}`}>
                     {type === 'success' ? <div className="text-accent"><IconCloud /></div> : null}
                     <span className="font-medium">{message}</span>
                 </div>
@@ -713,7 +720,7 @@
                         {unsavedChanges && isCloudConfigured && (
                             <button 
                                 onClick={() => handleCloudUpload(null, null)}
-                                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-accent text-black font-bold px-6 py-4 rounded-full shadow-[0_0_30px_rgba(39,213,102,0.4)] flex items-center gap-3 animate-slide-up hover:scale-105 transition-transform whitespace-nowrap"
+                                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-accent text-black font-bold px-6 py-4 rounded-full shadow-[0_0_30px_rgba(39,213,102,0.4)] flex items-center gap-3 animate-slide-up-centered hover:scale-105 transition-transform whitespace-nowrap"
                             >
                                 <IconCloud /> Сохранить изменения
                             </button>
@@ -793,7 +800,7 @@
                                 <div>
                                     <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
                                         Мои Курсы
-                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.8</span>
+                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.9</span>
                                     </h1>
                                     <p className="text-subtext text-lg mt-1">Локальный трекер обучения</p>
                                 </div>
