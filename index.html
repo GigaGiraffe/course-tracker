@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои Курсы v1.2 Cloud</title>
+    <title>Мои Курсы v1.4 Smart Collapse</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -282,9 +282,7 @@
             return node.children.reduce((acc, child) => acc + countCompletedFiles(child, completedMap, excludedMap), 0);
         }
 
-        const FileTree = ({ node, completedMap, ratingsMap, excludedMap = {}, onToggle, onRate, onExclude }) => {
-            const [isOpen, setIsOpen] = useState(true);
-
+        const FileTree = ({ node, completedMap, ratingsMap, excludedMap = {}, expandedMap = {}, onToggle, onRate, onExclude, onToggleFolder }) => {
             const folderStats = useMemo(() => {
                 if (node.kind !== 'directory') return null;
                 const total = countFiles(node, excludedMap);
@@ -311,12 +309,14 @@
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className={`flex items-center justify-end w-full sm:w-auto mt-2 sm:mt-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ${rating > 0 && !isExcluded ? 'sm:opacity-100' : ''} ${isExcluded ? 'invisible' : ''}`}>
+                            {/* Stars: Always visible */}
+                            <div className={`flex items-center justify-end w-full sm:w-auto mt-2 sm:mt-0 opacity-100 transition-opacity ${isExcluded ? 'invisible' : ''}`}>
                                 <StarRating rating={rating} onRate={(r) => onRate(node.id, r)} />
                             </div>
+                            {/* Eye: Always visible, dimmed when inactive */}
                              <div 
                                 onClick={(e) => { e.stopPropagation(); onExclude(node.id); }}
-                                className={`cursor-pointer p-2 rounded-lg hover:bg-white/10 text-subtext hover:text-white transition-all ${isExcluded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                className={`cursor-pointer p-2 rounded-lg hover:bg-white/10 text-subtext hover:text-white transition-all opacity-100`}
                                 title={isExcluded ? "Включить в прогресс" : "Исключить из прогресса"}
                             >
                                 {isExcluded ? <IconEyeOff /> : <IconEye />}
@@ -327,10 +327,12 @@
             }
 
             const isFolderCompleted = folderStats.percent === 100;
+            // Determine if folder is open based on saved state (default false)
+            const isOpen = expandedMap[node.id];
 
             return (
                 <div className="mb-4 mt-3">
-                    <div onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between py-2 px-2 rounded-lg cursor-pointer hover:bg-hover select-none group w-full">
+                    <div onClick={() => onToggleFolder(node.id)} className="flex items-center justify-between py-2 px-2 rounded-lg cursor-pointer hover:bg-hover select-none group w-full">
                         <div className="flex items-center gap-3">
                             <span className="text-subtext group-hover:text-text transition-colors bg-card p-1.5 rounded-lg border border-border group-hover:border-subtext">
                                 {isOpen ? <IconChevronDown /> : <IconChevronRight />}
@@ -347,7 +349,7 @@
                     {isOpen && (
                         <div className="border-l-2 border-border ml-[21px] pl-5 mt-2 space-y-1">
                             {node.children.map(child => (
-                                <FileTree key={child.id} node={child} completedMap={completedMap} ratingsMap={ratingsMap} excludedMap={excludedMap} onToggle={onToggle} onRate={onRate} onExclude={onExclude} />
+                                <FileTree key={child.id} node={child} completedMap={completedMap} ratingsMap={ratingsMap} excludedMap={excludedMap} expandedMap={expandedMap} onToggle={onToggle} onRate={onRate} onExclude={onExclude} onToggleFolder={onToggleFolder} />
                             ))}
                         </div>
                     )}
@@ -385,7 +387,7 @@
 
                         <section className="bg-card p-6 rounded-2xl border border-border">
                             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconEdit /> Переименование курса</h2>
-                            <p className="text-subtext">В списке курсов наведите курсор на название курса. Появится значок карандаша. Нажмите на него, чтобы изменить название (например, убрать лишние теги <i>[slwbl]</i>). Это не влияет на папку на диске.</p>
+                            <p className="text-subtext">Рядом с названием курса есть иконка карандаша. Нажмите на неё, чтобы изменить название (например, убрать лишние теги <i>[slwbl]</i>). Это не влияет на папку на диске.</p>
                         </section>
 
                         <section className="bg-card p-6 rounded-2xl border border-border">
@@ -404,12 +406,12 @@
 
                         <section className="bg-card p-6 rounded-2xl border border-border">
                             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconEye /> Исключение из прогресса</h2>
-                            <p className="text-subtext">Наведите курсор на любой файл. Справа появится иконка глаза. Нажмите её, чтобы <b>исключить файл</b> из расчета общего прогресса (например, файлы заданий или доп. материалов). Файл станет серым, а иконка сменится на перечеркнутый глаз.</p>
+                            <p className="text-subtext">Справа от каждого файла есть иконка глаза. Нажмите её, чтобы <b>исключить файл</b> из расчета общего прогресса (например, файлы заданий или доп. материалов). Файл станет серым, а иконка сменится на перечеркнутый глаз.</p>
                         </section>
 
                         <section className="bg-card p-6 rounded-2xl border border-border">
                             <h2 className="text-2xl font-bold mb-4 flex items-center gap-3"><IconStar filled={true} /> Оценка уроков</h2>
-                            <p className="text-subtext">Наведите курсор на файл, чтобы увидеть звезды рейтинга. Вы можете поставить оценку от 1 до 5, чтобы отметить полезные или сложные уроки для будущего повторения.</p>
+                            <p className="text-subtext">Используйте звезды рейтинга справа от файла, чтобы отметить полезные или сложные уроки.</p>
                         </section>
                     </div>
                 </div>
@@ -450,6 +452,7 @@
                         structure: structure,
                         completed: {},
                         ratings: {}, excluded: {},
+                        expanded: {}, // New: stores open/closed state of folders
                         createdAt: new Date().toISOString()
                     }]);
                 } catch (err) { if (err.name !== 'AbortError') console.error(err); }
@@ -537,6 +540,15 @@
                     const newExcluded = { ...(c.excluded || {}) };
                     if (newExcluded[fileId]) delete newExcluded[fileId]; else newExcluded[fileId] = true;
                     return { ...c, excluded: newExcluded };
+                }));
+            };
+            // New: Toggle Folder Persistence
+            const toggleFolder = (courseId, folderId) => {
+                setCourses(courses.map(c => {
+                    if (c.id !== courseId) return c;
+                    const newExpanded = { ...(c.expanded || {}) };
+                    if (newExpanded[folderId]) delete newExpanded[folderId]; else newExpanded[folderId] = true;
+                    return { ...c, expanded: newExpanded };
                 }));
             };
 
@@ -639,7 +651,7 @@
                         <div className="px-6">
                             <div className="bg-card rounded-3xl p-8 border border-border/50 shadow-inner">
                                 {course.structure.children.map(child => (
-                                    <FileTree key={child.id} node={child} completedMap={course.completed} ratingsMap={course.ratings || {}} onToggle={(fileId) => toggleFile(course.id, fileId)} onRate={(fileId, rating) => rateFile(course.id, fileId, rating)} excludedMap={course.excluded || {}} onExclude={(fileId) => toggleExclude(course.id, fileId)} />
+                                    <FileTree key={child.id} node={child} completedMap={course.completed} ratingsMap={course.ratings || {}} excludedMap={course.excluded || {}} expandedMap={course.expanded || {}} onToggle={(fileId) => toggleFile(course.id, fileId)} onRate={(fileId, rating) => rateFile(course.id, fileId, rating)} onExclude={(fileId) => toggleExclude(course.id, fileId)} onToggleFolder={(folderId) => toggleFolder(course.id, folderId)} />
                                 ))}
                             </div>
                         </div>
@@ -685,7 +697,7 @@
                                 <div>
                                     <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
                                         Мои Курсы
-                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.2</span>
+                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.4</span>
                                     </h1>
                                     <p className="text-subtext text-lg mt-1">Локальный трекер обучения</p>
                                 </div>
@@ -776,7 +788,7 @@
                                                         </h3>
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); setEditingId(course.id); }}
-                                                            className="opacity-0 group-hover/title:opacity-100 text-subtext hover:text-accent transition-opacity p-1 mb-2"
+                                                            className="opacity-100 text-subtext hover:text-accent transition-opacity p-1 mb-2"
                                                             title="Изменить название"
                                                         >
                                                             <IconEdit />
@@ -795,7 +807,7 @@
                                             <div className="hover:scale-105 transition-transform">
                                                 <CircularProgress percentage={progress} size={80} strokeWidth={8} />
                                             </div>
-                                            <button onClick={(e) => handleDelete(e, course.id)} className="text-subtext hover:text-red-500 p-3 rounded-xl hover:bg-white/10 transition-colors opacity-0 group-hover:opacity-100" title="Удалить курс">
+                                            <button onClick={(e) => handleDelete(e, course.id)} className="text-subtext hover:text-red-500 p-3 rounded-xl hover:bg-white/10 transition-colors opacity-100" title="Удалить курс">
                                                 <IconTrash />
                                             </button>
                                         </div>
