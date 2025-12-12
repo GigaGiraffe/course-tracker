@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои Курсы v1.23 Final Icon</title>
+    <title>Мои Курсы v1.24 Precision</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -131,13 +131,16 @@
             const circumference = radius * 2 * Math.PI;
             const offset = circumference - (percentage / 100) * circumference;
 
+            // Format for display: remove .0 if it's an integer
+            const displayPercentage = percentage % 1 === 0 ? percentage.toFixed(0) : percentage.toFixed(1);
+
             return (
                 <div className="relative flex items-center justify-center select-none" style={{ width: size, height: size }}>
                     <svg width={size} height={size} className="transform -rotate-90 drop-shadow-lg">
                         <circle cx={size / 2} cy={size / 2} r={radius} stroke="#27272A" strokeWidth={strokeWidth} fill="transparent" />
                         <circle className="circle-progress" cx={size / 2} cy={size / 2} r={radius} stroke="#27D566" strokeWidth={strokeWidth} fill="transparent" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
                     </svg>
-                    <span className="absolute text-lg font-bold text-white">{percentage}%</span>
+                    <span className="absolute text-lg font-bold text-white">{displayPercentage}%</span>
                 </div>
             );
         };
@@ -675,7 +678,9 @@
             const getProgress = (course) => {
                 const total = countFiles(course.structure, course.excluded);
                 const done = countCompletedFiles(course.structure, course.completed, course.excluded);
-                return total === 0 ? 0 : Math.round((done / total) * 100);
+                if (total === 0) return 0;
+                // RETURN RAW NUMBER (e.g. 12.5) for precision
+                return (done / total) * 100;
             };
 
             // --- Cloud Sync Logic ---
@@ -768,6 +773,8 @@
                 const course = courses.find(c => c.id === activeCourseId);
                 if (!course) return setActiveCourseId(null);
                 const progress = getProgress(course);
+                const displayProgress = progress % 1 === 0 ? progress.toFixed(0) : progress.toFixed(1);
+
 
                 return (
                     <div className="max-w-5xl mx-auto min-h-screen pb-20">
@@ -791,7 +798,7 @@
                                     </button>
                                     <div className="text-right flex items-center gap-4">
                                         <span className="text-sm font-mono text-subtext uppercase tracking-widest hidden sm:inline">Общий прогресс</span>
-                                        <div className="text-3xl font-bold text-accent">{progress}%</div>
+                                        <div className="text-3xl font-bold text-accent">{displayProgress}%</div>
                                     </div>
                                 </div>
                                 <div className="h-5 w-full bg-card rounded-full overflow-hidden border border-white/5 relative">
@@ -864,7 +871,7 @@
                                 <div>
                                     <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
                                         Мои Курсы
-                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.23</span>
+                                        <span className="bg-accent/10 text-accent text-xs px-2 py-0.5 rounded-full border border-accent/20 tracking-normal font-mono relative -top-1">v1.24</span>
                                     </h1>
                                     <p className="text-subtext text-lg mt-1">Локальный трекер обучения</p>
                                 </div>
